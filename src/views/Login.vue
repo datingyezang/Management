@@ -60,33 +60,30 @@
 </template>
 
 <script>
-import { encrypt } from "@/js/utils/rsaEncrypt";
-import { getCodeImg , login } from "@/api/Login/login";
-import Background from '../assets/images/background.jpeg'
-import Cookies from "js-cookie";
-import {setToken} from "@/js/utils/CookieAuth";
-import Config from '@/js/settings'
+import { encrypt } from "@/js/utils/rsaEncrypt";     //密码加密
+import { getCodeImg , login } from "@/api/Login/login";//登录、验证码接口
+import Cookies from "js-cookie";//cookie 缓存
+import {setToken} from "@/js/utils/CookieAuth"; // 设置权限 token
+import Config from '@/js/settings'  //公共设置
 export default {
   name: 'Login',
   data() {
     return {
-      Background: Background,
-      codeUrl: '',
-      cookiePass: '',
-      loginForm: {
-        username: 'admin',
-        password: '123456',
+      codeUrl: '',   //验证码
+      cookiePass: '', //保存cookie里面的加密后的密码
+      loginForm: {         //登录信息
+        username: '',
+        password: '',
         rememberMe: false,
         code: '',
         uuid: ''
       },
-      loginRules: {
+      loginRules: {    //验证
         username: [{ required: true, trigger: 'blur', message: '用户名不能为空' }],
         password: [{ required: true, trigger: 'blur', message: '密码不能为空' }],
         code: [{ required: true, trigger: 'change', message: '验证码不能为空' }]
       },
-      loading: false,
-      redirect: undefined
+      loading: false,   //加载动画
     }
   },
   watch: {
@@ -95,35 +92,21 @@ export default {
   created() {
     // 获取验证码
     this.getCode()
-    // 获取用户名密码等Cookie
-    this.getCookie()
     // token 过期提示
     this.point()
   },
   methods: {
+    //验证码
     getCode() {
       getCodeImg().then(res => {
-        console.log(res,'获取回调')
         this.codeUrl = res.img
         this.loginForm.uuid = res.uuid
       })
     },
-    getCookie() {
-      const username = Cookies.get('username')
-      let password = Cookies.get('password')
-      const rememberMe = Cookies.get('rememberMe')
-      // 保存cookie里面的加密后的密码
-      this.cookiePass = password === undefined ? '' : password
-      password = password === undefined ? this.loginForm.password : password
-      this.loginForm = {
-        username: username === undefined ? this.loginForm.username : username,
-        password: password,
-        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe),
-        code: ''
-      }
-    },
-    handleLogin() {
 
+    handleLogin() {
+      //cookie里加密密码
+      this.cookiePass = Cookies.get('password') === undefined ? '' : Cookies.get('password')
       this.$refs.loginForm.validate(valid => {
         const user = {
           username: this.loginForm.username,
@@ -133,17 +116,17 @@ export default {
           uuid: this.loginForm.uuid
         }
         if (user.password !== this.cookiePass) {
+          //m密码加密
           user.password = encrypt(user.password)
         }
+
         if (valid) {
           this.loading = true
           if (user.rememberMe) {
-            console.log('0000')
             Cookies.set('username', user.username, { expires: Config.passCookieExpires })
             Cookies.set('password', user.password, { expires: Config.passCookieExpires })
             Cookies.set('rememberMe', user.rememberMe, { expires: Config.passCookieExpires })
           } else {
-            console.log('1111')
             Cookies.remove('username')
             Cookies.remove('password')
             Cookies.remove('rememberMe')
@@ -151,14 +134,15 @@ export default {
 
           login(user.username, user.password, user.code, user.uuid).then(res => {
             setToken(res.token)
-            console.log(res, '1111')
             console.log(this.$store.dispatch('saveUserInfo',res))
             this.$router.push({
               path: '/index'
             })
+          }).catch((err)=>{
+            this.getCode()
+            this.loading = false
           })
         } else {
-          console.log('error submit!!')
           return false
         }
       })
