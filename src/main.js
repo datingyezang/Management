@@ -11,6 +11,7 @@ import Cookies from 'js-cookie'
 import 'element-ui/lib/theme-chalk/index.css';
 //引入lib-flexible
 import 'lib-flexible/flexible';
+import './js/utils/rem'
 
 Vue.use(ElementUI, {
   size: Cookies.get('size') || 'small' // set element-ui default size

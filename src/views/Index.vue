@@ -104,8 +104,10 @@ export default {
       .logo{
         margin-top: 18px;
         img{
-          width:80px;
-          height: 80px;
+          width:91px;
+          height: 91px;
+          background-color: #e6edf5;
+          border-radius: 50px 50px;
         }
         span{
           display: block;
